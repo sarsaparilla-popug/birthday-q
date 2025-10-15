@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Quest</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: #fff;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 165, 0, 0.3);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #ffa500;
+            margin-bottom: 10px;
+            font-size: 2em;
+            text-shadow: 0 0 10px rgba(255, 165, 0, 0.5);
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #aaa;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+        }
+        
+		/* Экран приветствия */									   
+        .welcome-screen {
+            text-align: center;
+        }
+        
+        .welcome-text {
+            font-size: 1.2em;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            color: #ddd;
+        }
+        
+        .start-button {
+            width: 100%;
+            padding: 20px;
+            font-size: 1.3em;
+            background: linear-gradient(135deg, #ff8c00, #ffa500);
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .start-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(255, 165, 0, 0.4);
+            animation: none;
+        }
+        
+		/* Экран с первой подсказкой */													 
+        .clue-screen {
+            display: none;
+            text-align: center;
+        }
+
+        .clue-text {
+            font-size: 1.1em;
+            line-height: 1.6;
+            margin-bottom: 25px;
+            color: #ddd;
+        }
+
+        .progress {
+            font-size: 0.9em;
+            color: #ffa500;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        
+		/* Основной экран квеста */											  
+        .quest-screen {
+            display: none;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: #ffa500;
+            font-size: 1.1em;
+        }
+        
+        input {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.1em;
+            border: 2px solid rgba(255, 165, 0, 0.3);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            text-transform: uppercase;
+            transition: all 0.3s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #ffa500;
+            box-shadow: 0 0 15px rgba(255, 165, 0, 0.3);
+        }
+        
+        button {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2em;
+            background: linear-gradient(135deg, #ff8c00, #ffa500);
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s;
+            text-transform: uppercase;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(255, 165, 0, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .message {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 1em;
+            display: none;
+        }
+        
+        .message.error {
+            background: rgba(255, 0, 0, 0.2);
+            border: 1px solid rgba(255, 0, 0, 0.5);
+            color: #ff6b6b;
+        }
+        
+        .message.success {
+            background: rgba(0, 255, 0, 0.2);
+            border: 1px solid rgba(0, 255, 0, 0.5);
+            color: #51cf66;
+        }
+        
+        .audio-player {
+            margin-top: 20px;
+        }
+        
+        audio {
+            width: 100%;
+            border-radius: 10px;
+            filter: sepia(100%) hue-rotate(10deg) saturate(3);
+        }
+        
+        .hint {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.85em;
+            color: #888;
+        }
+
+        .loading {
+            display: inline-block;
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .replay-button {
+            margin-top: 15px;
+            padding: 12px;
+            font-size: 1em;
+            background: rgba(255, 165, 0, 0.3);
+            border: 1px solid rgba(255, 165, 0, 0.5);
+        }
+
+        .replay-button:hover {
+            background: rgba(255, 165, 0, 0.5);
+        }
+
+		/* Спойлер с текстом подсказки */														 
+        .spoiler-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .spoiler-button {
+            padding: 10px 20px;
+            font-size: 0.9em;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 165, 0, 0.2);
+            color: #888;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+
+        .spoiler-button:hover {
+            background: rgba(255, 165, 0, 0.1);
+            color: #aaa;
+        }
+
+        .spoiler-content {
+            display: none;
+            padding: 15px;
+            background: rgba(255, 165, 0, 0.05);
+            border: 1px solid rgba(255, 165, 0, 0.2);
+            border-radius: 10px;
+            color: #ddd;
+            font-size: 0.95em;
+            line-height: 1.5;
+            margin-top: 10px;
+        }
+
+        .spoiler-content.visible {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+		/* Аудиоплеер в меню (фоновая музыка) */																	
+        .background-audio {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 165, 0, 0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 165, 0, 0.2);
+        }
+
+        .background-audio p {
+            font-size: 0.9em;
+            color: #aaa;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>BIRTHDAY PORTAL QUEST</h1>
+        
+        <div class="welcome-screen" id="welcomeScreen">
+            <div class="welcome-text">
+                <p style="margin-bottom: 20px;">Добро пожаловать в тестовую лабораторию Aperture Science.</p>
+                <p style="margin-bottom: 20px;">Перед тобой ряд испытаний. Торт не предоставляется. Слушай подсказки и ищи карточки с паролями.</p>
+                <p style="font-size: 0.9em; color: #888;">🔊 Включи звук</p>
+            </div>
+
+			<!-- ФОНОВАЯ МУЗЫКА В МЕНЮ -->															
+            <div class="background-audio">
+                <p>Дружелюбная речь для испытуемого</p>
+                <audio id="menuAudio" controls></audio>
+            </div>
+
+            <button class="start-button" onclick="startQuest()">Начать испытания</button>
+        </div>
+
+		<!-- Экран с подсказкой -->										   
+        <div class="clue-screen" id="clueScreen">
+            <p class="progress" id="progress">Испытание 1</p>
+            <div class="clue-text">
+                <p style="margin-bottom: 15px;">Прослушай подсказку</p>
+                <p style="font-size: 0.95em; color: #aaa;">Найди место, о котором идёт речь, и ищи там карточку с паролем</p>
+            </div>
+            <div class="audio-player">
+                <audio id="clueAudio" controls></audio>
+            </div>
+            <button class="replay-button" onclick="replayClue()">Прослушать ещё раз. Потому что первый раз, очевидно, был недостаточно убедительным</button>
+            
+			<!-- Спойлер с текстом подсказки -->															
+            <div class="spoiler-container">
+                <button class="spoiler-button" onclick="toggleSpoiler()">Показать текст. Да, мы тоже удивлены, что тебе нужна эта функция</button>
+                <div class="spoiler-content" id="spoilerContent"></div>
+            </div>
+            
+            <button onclick="showPasswordInput()" style="margin-top: 20px;">✅ Нашёл карточку, ввести пароль</button>
+        </div>
+
+			<!-- Экран ввода пароля -->									   
+        <div class="quest-screen" id="questScreen">
+            <p class="progress" id="progressQuest">Испытание 1</p>
+            <p class="subtitle">Введи пароль с карточки</p>
+            
+            <div class="input-group">
+                <label for="password">Кодовое слово:</label>
+                <input 
+                    type="text" 
+                    id="password" 
+                    placeholder="Введите пароль..."
+                    autocomplete="off"
+                >
+            </div>
+            
+            <button onclick="checkPassword()">Проверить</button>
+            
+            <div class="message" id="message"></div>
+            
+            <p class="hint">💡 Пароли не чувствительны к регистру. Мы сделали это, чтобы ты хотя бы раз не ошибся</p>
+        </div>
+    </div>
+
+    <script>
+        // ====================================
+        // 😈 САРКАСТИЧНЫЕ РЕПЛИКИ ПРИ ОШИБКЕ
+        // ====================================
+		// Когда игрок вводит НЕПРАВИЛЬНЫЙ пароль, играет случайная реплика GLaDOS
+													 
+        const errorAudios = [
+            "https://sarsaparilla-popug.github.io/birthday-q/fault-1.wav",
+            "https://sarsaparilla-popug.github.io/birthday-q/fault-2.wav",
+            "https://sarsaparilla-popug.github.io/birthday-q/fault-3.wav",
+            "https://sarsaparilla-popug.github.io/birthday-q/fault-4.wav",
+            "https://sarsaparilla-popug.github.io/birthday-q/fault-5.wav",
+            "https://sarsaparilla-popug.github.io/birthday-q/fault-6.wav"
+        ];
+
+        // ====================================
+        // 🎵 ФОНОВАЯ МУЗЫКА В МЕНЮ (МАССИВ)
+        // ====================================
+        // Эти фразы играют одна за другой В МЕНЮ, до нажатия кнопки "Начать"
+        const menuBackgroundMusic = [
+            "https://sarsaparilla-popug.github.io/birthday-q/welcome-1.wav",
+            "https://sarsaparilla-popug.github.io/birthday-q/welcome-2.wav",
+            "https://sarsaparilla-popug.github.io/birthday-q/welcome-3.wav"
+        ];
+
+        // ====================================
+        // 🎤 ДОПОЛНИТЕЛЬНЫЕ ПРИВЕТСТВЕННЫЕ ФРАЗЫ
+        // ====================================
+        // Эти фразы играют ПОСЛЕ нажатия "Начать", перед первой подсказкой
+		// Они играют один раз, одна за другой, перед первой подсказкой
+        // Если не нужны дополнительные фразы - оставьте массив пустым													
+        const welcomeAudios = [
+            "https://sarsaparilla-popug.github.io/birthday-q/welc-1.wav",
+            "https://sarsaparilla-popug.github.io/birthday-q/welc-2.wav"
+        ];
+
+        // ====================================
+        // 🎯 ИСПЫТАНИЯ КВЕСТА
+        // ====================================
+		// Каждый блок { } — это одно испытание
+        // clue — ссылка на аудио-подсказку (что игрок слышит)
+        // password — пароль, который игрок должен ввести (после того как найдёт карточку)																							// - Каждый блок отделяется запятой, кроме последнего!
+        const questSteps = [
+				// ИСПЫТАНИЕ 1		   
+            {
+                clue: "https://sarsaparilla-popug.github.io/birthday-q/bathroom.wav",
+                clueText: "Humans can survive underwater. But not for very long.",
+                password: "bathroom",
+                successAudio: "https://sarsaparilla-popug.github.io/birthday-q/gg-1.wav"
+            },
+				// ИСПЫТАНИЕ 2
+            {
+                clue: "https://sarsaparilla-popug.github.io/birthday-q/smell-burning-kitchen-oven.wav",
+                clueText: "Do you smell something burning?",
+                password: "oven",
+                successAudio: "https://sarsaparilla-popug.github.io/birthday-q/gg-2.wav"
+            },
+				// ИСПЫТАНИЕ 3				   
+            {
+                clue: "https://sarsaparilla-popug.github.io/birthday-q/rats-office.wav",
+                clueText: "Rats cannot throw up.",
+                password: "white rat",
+                successAudio: "https://sarsaparilla-popug.github.io/birthday-q/gg-3.wav"
+            },
+			    // ИСПЫТАНИЕ 4
+            {
+                clue: "https://sarsaparilla-popug.github.io/birthday-q/under-teapot-kitchen.wav",
+                clueText: "Hot water freezes quicker than cold water.",
+                password: "kettle",
+                successAudio: "https://sarsaparilla-popug.github.io/birthday-q/gg-4.wav"
+            },
+			    // ИСПЫТАНИЕ 5
+            {
+                clue: "https://sarsaparilla-popug.github.io/birthday-q/toothpaste-bathroom.wav",
+                clueText: "Roman toothpaste was made with human urine. Urine as an ingredient in toothpaste continued to be used up until the 18th century.",
+                password: "herbs",
+                successAudio: "https://sarsaparilla-popug.github.io/birthday-q/gg-5.wav"
+            },
+			    // ИСПЫТАНИЕ 6
+            {
+                clue: "https://sarsaparilla-popug.github.io/birthday-q/avocados-kitchen-fridge.wav",
+                clueText: "Avocados have the highest fiber and calories of any fruit. They are found in Australians.",
+                password: "drinks",
+                successAudio: "https://sarsaparilla-popug.github.io/birthday-q/gg-6.wav"
+            },
+			  // ИСПЫТАНИЕ 7
+            {
+                clue: "https://sarsaparilla-popug.github.io/birthday-q/dreams-bedroom-pillow.wav",
+                clueText: "Dreams are the subconscious mind's way of reminding people to go to school naked and have their teeth fall out.",
+                password: "bed",
+                successAudio: "https://sarsaparilla-popug.github.io/birthday-q/gg-7.wav"
+            },
+			   // ИСПЫТАНИЕ 8
+            {
+                clue: "https://sarsaparilla-popug.github.io/birthday-q/flour-kitchen.wav",
+                clueText: "Two cups all-purpose flour.",
+                password: "snacks",
+                successAudio: "https://sarsaparilla-popug.github.io/birthday-q/gg-8.wav"
+            },
+			   // ИСПЫТАНИЕ 9
+            {
+                clue: "https://sarsaparilla-popug.github.io/birthday-q/pens-office.wav",
+                clueText: "Pens. Pens. Pens. Pens. Pens. Pens. Pens.",
+                password: "book",
+                successAudio: "https://sarsaparilla-popug.github.io/birthday-q/gg-9.wav"
+            },
+			  // ИСПЫТАНИЕ 10
+            {
+                clue: "https://sarsaparilla-popug.github.io/birthday-q/salt-kitchen.wav",
+                clueText: "The average adult body contains half a pound of salt.",
+                password: "spices",
+                successAudio: "https://sarsaparilla-popug.github.io/birthday-q/gg-10.wav"
+            },
+			   // ИСПЫТАНИЕ 11
+            {
+                clue: "https://sarsaparilla-popug.github.io/birthday-q/pants-bedroom.wav",
+                clueText: "Pants were invented by sailors in the sixteenth century to avoid Poseidon's wrath. It was believed that the sight of naked sailors angered the sea god.",
+                password: "clothes",
+                successAudio: "https://sarsaparilla-popug.github.io/birthday-q/gg-11.wav"
+            },
+			   // ИСПЫТАНИЕ 12
+            {
+                clue: "https://sarsaparilla-popug.github.io/birthday-q/tofu-kitchen-fridge.wav",
+                clueText: "China produces the world's second largest crop of soybeans.",
+                password: "woohoo",
+                successAudio: "https://sarsaparilla-popug.github.io/birthday-q/gg-12.wav"
+            },	
+                // Введи на английском то, на что указывают цифры			
+            {
+                clue: "https://sarsaparilla-popug.github.io/birthday-q/welcome-final-test.wav",
+                clueText: "Введи на английском то, на что указывают цифры",
+										 
+                password: "Back to the Future",
+                successAudio: "https://sarsaparilla-popug.github.io/birthday-q/you-win.wav"
+            }
+	// 👇 КОПИРУЙТЕ ЭТОТ БЛОК, ЧТОБЫ ДОБАВИТЬ ЕЩЁ ИСПЫТАНИЯ:
+            // {
+            //     clue: "ссылка_на_подсказку",
+            //     clueText: "Текст того, что говорится в аудио",
+            //     password: "ПАРОЛЬ",
+            //     successAudio: "ссылка_на_реплику_успеха"
+            // },
+            
+            // ❗ ВАЖНО: После последнего блока НЕ ставьте запятую!
+        ];
+
+        // ====================================
+        // 💻 КОД ПРОГРАММЫ
+        // ====================================
+        
+        let currentStep = 0; // Текущий шаг квеста (начинаем с 0)
+        let currentMenuAudioIndex = 0;
+
+        // Загружаем и проигрываем фоновую музыку в меню
+        window.addEventListener('DOMContentLoaded', function() {
+            playMenuMusic();
+        });
+
+        // Функция проигрывания фоновой музыки (одна за другой)
+        function playMenuMusic() {
+            const menuAudio = document.getElementById('menuAudio');
+            
+            if (menuBackgroundMusic.length > 0 && currentMenuAudioIndex < menuBackgroundMusic.length) {
+                menuAudio.src = menuBackgroundMusic[currentMenuAudioIndex];
+                menuAudio.play().catch(() => {
+                    console.log('Автовоспроизведение заблокировано');
+                });
+                
+                // Когда трек закончился, играем следующий
+                menuAudio.onended = function() {
+                    currentMenuAudioIndex++;
+                    if (currentMenuAudioIndex < menuBackgroundMusic.length) {
+                        playMenuMusic();
+                    }
+                };
+            }
+        }
+
+        // Функция запуска квеста
+        async function startQuest() {
+            // console.log('Кнопка Начать нажата');
+            
+            const welcomeScreen = document.getElementById('welcomeScreen');
+            const menuAudio = document.getElementById('menuAudio');
+            
+            // Останавливаем фоновую музыку меню
+            try {
+                menuAudio.pause();
+            } catch (e) {
+                console.log('Ошибка остановки меню:', e);
+            }
+            
+            // Показываем загрузку
+            welcomeScreen.innerHTML = '<p class="welcome-text"><span class="loading">Загрузка испытаний...</span></p>';
+            
+            // Проигрываем приветственные фразы
+            if (welcomeAudios.length > 0) {
+                await playWelcomeAudios();
+            }
+            
+            // Показываем первую подсказку
+            welcomeScreen.style.display = 'none';
+            showClue();
+        }
+
+		 // Проигрываем приветственные фразы одну за другой																							
+        async function playWelcomeAudios() {
+            for (let i = 0; i < welcomeAudios.length; i++) {
+                await playAudio(welcomeAudios[i]);
+                await sleep(500); // Пауза 0.5 сек между фразами
+            }
+        }
+
+		// Показываем экран с подсказкой														  
+        function showClue() {
+            const clueScreen = document.getElementById('clueScreen');
+            const questScreen = document.getElementById('questScreen');
+            const clueAudio = document.getElementById('clueAudio');
+            const progress = document.getElementById('progress');
+            const spoilerContent = document.getElementById('spoilerContent');
+            const spoilerButton = document.querySelector('.spoiler-button');
+            
+            questScreen.style.display = 'none';
+            clueScreen.style.display = 'block';
+            
+			// Показываем прогресс: "Испытание 1 из 3"																	   
+            progress.textContent = `Испытание ${currentStep + 1} из ${questSteps.length}`;
+            
+			// Загружаем текст подсказки в спойлер																	 
+            spoilerContent.textContent = questSteps[currentStep].clueText || "Текст подсказки не указан";
+            spoilerContent.classList.remove('visible'); // Прячем спойлер при новой подсказке
+            spoilerButton.textContent = "👁️ Показать текст подсказки"; // Сбрасываем текст кнопки
+            
+			// Загружаем и автоматически играем подсказку				
+            clueAudio.src = questSteps[currentStep].clue;
+			clueAudio.play();
+            clueAudio.play().catch((e) => {
+                console.log('Автозапуск подсказки заблокирован');
+            });
+			//clueAudio.src = questSteps[currentStep].clue;
+            // Убрали автопроигрывание - игрок сам нажмёт Play
+        }
+
+		// Переключение спойлера (показать/скрыть)													  
+        function toggleSpoiler() {
+            const spoilerContent = document.getElementById('spoilerContent');
+            const spoilerButton = document.querySelector('.spoiler-button');
+            
+            if (spoilerContent.classList.contains('visible')) {
+                spoilerContent.classList.remove('visible');
+                spoilerButton.textContent = "👁️ Показать текст подсказки";
+            } else {
+                spoilerContent.classList.add('visible');
+                spoilerButton.textContent = "👁️ Скрыть текст подсказки";
+            }
+        }
+
+		// Кнопка "Прослушать ещё раз"	
+        function replayClue() {
+            const clueAudio = document.getElementById('clueAudio');
+            clueAudio.currentTime = 0; // Перематываем в начало
+            clueAudio.play();
+        }
+
+		// Кнопка "Нашёл карточку, ввести пароль"	 
+        function showPasswordInput() {
+    const clueScreen = document.getElementById('clueScreen');
+    const questScreen = document.getElementById('questScreen');
+    const progressQuest = document.getElementById('progressQuest');
+    const passwordInput = document.getElementById('password');
+    const button = document.querySelector('button[onclick="checkPassword()"]');
+    const message = document.getElementById('message');
+    
+    clueScreen.style.display = 'none';
+    questScreen.style.display = 'block';
+    
+    progressQuest.textContent = `Испытание ${currentStep + 1} из ${questSteps.length}`;
+    
+    passwordInput.value = '';
+    passwordInput.disabled = false;
+    button.disabled = false;  // ← РАЗБЛОКИРУЕМ КНОПКУ
+    passwordInput.focus();
+    
+    message.style.display = 'none';
+    message.textContent = '';
+}
+
+        // Вспомогательная функция для проигрывания аудио с ожиданием окончания
+        function playAudio(src) {
+            return new Promise((resolve) => {
+                const audio = new Audio(src);
+                audio.addEventListener('ended', resolve);
+                audio.addEventListener('error', resolve); // Если ошибка - продолжаем
+                audio.play().catch(() => resolve()); // Если браузер заблокировал - продолжаем
+            });
+        }
+
+        // Пауза (ждём указанное количество миллисекунд)
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        
+        // Проверка введённого пароля
+function checkPassword() {
+    const input = document.getElementById('password');
+    const button = document.querySelector('button[onclick="checkPassword()"]');
+    const message = document.getElementById('message');
+    
+    // Если поле уже заблокировано, не проверяем
+    if (input.disabled) {
+        return;
+    }
+    
+    const enteredPassword = input.value.trim().toUpperCase();
+    const correctPassword = questSteps[currentStep].password.toUpperCase();
+    
+    if (!enteredPassword) {
+        showMessage('Введи пароль', 'error');
+        return;
+    }
+    
+    if (enteredPassword === correctPassword) {
+        showMessage('✅ Пароль верный!', 'success');
+        
+        // Блокируем ВСЁ
+        input.disabled = true;
+        button.disabled = true;
+        
+        const successAudio = questSteps[currentStep].successAudio;
+        if (successAudio) {
+            playAudio(successAudio).then(() => {
+                proceedToNextStep();
+            });
+        } else {
+            setTimeout(proceedToNextStep, 1500);
+        }
+        
+    } else {
+        showMessage('❌ Неверный пароль. Попробуйте ещё раз!', 'error');
+        
+        if (errorAudios.length > 0) {
+            const randomIndex = Math.floor(Math.random() * errorAudios.length);
+            playAudio(errorAudios[randomIndex]);
+        }
+        
+        input.value = '';
+        input.focus();
+    }
+}
+
+        // Переход к следующему испытанию
+        function proceedToNextStep() {
+            currentStep++; // Увеличиваем номер испытания
+            
+            if (currentStep < questSteps.length) {
+                // Ещё есть испытания - показываем следующую подсказку
+                showClue();
+            } else {
+                // Все испытания пройдены - показываем победу!
+                showVictory();
+            }
+        }
+
+        // Экран победы (когда все испытания пройдены)
+        function showVictory() {
+            const questScreen = document.getElementById('questScreen');
+            questScreen.innerHTML = `
+                <div style="text-align: center;">
+                    <h2 style="color: #ffa500; margin-bottom: 20px; font-size: 2em;">ИСПЫТАНИЯ ПРОЙДЕНЫ!</h2>
+                    <p style="font-size: 1.2em; line-height: 1.6; color: #ddd; margin-bottom: 30px;">
+                        Это удивительно. Испытуемый успешно завершил все испытания Aperture Science. Забери свой подарок в шкафу. 
+                    </p>
+                    <p style="font-size: 0.9em; color: #888;">
+                        И нет, это всё ещё не торт.
+                    </p>
+                </div>
+            `;
+        }
+        
+        // Показ сообщений (успех или ошибка)
+        function showMessage(text, type) {
+            const message = document.getElementById('message');
+            message.textContent = text;
+            message.className = 'message ' + type;
+            message.style.display = 'block';
+            
+            // Сообщения об ошибках скрываем через 3 секунды
+            setTimeout(() => {
+                if (type === 'error') {
+                    message.style.display = 'none';
+                }
+            }, 3000);
+        }
+        
+        // Проверка пароля по нажатию Enter
+        document.getElementById('password').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkPassword();
+            }
+        });
+    </script>
+</body>
+</html>
